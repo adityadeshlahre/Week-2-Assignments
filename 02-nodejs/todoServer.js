@@ -39,11 +39,73 @@
 
   Testing the server - run `npm run test-todoServer` command in terminal
  */
-const express = require('express');
-const bodyParser = require('body-parser');
+const express = require("express");
+const bodyParser = require("body-parser");
 
 const app = express();
 
 app.use(bodyParser.json());
+
+const todos = [];
+var idCounter = 1;
+
+function displayTodos(req, res) {
+  res.json(todos);
+}
+
+app.get("/todos", displayTodos);
+
+function displayTodoById(req, res) {
+  var todoId = parseInt(req.params.id);
+  const todo = todos.find((todo) => todo.id === todoId);
+  if (todo) {
+    res.json(todo);
+  } else {
+    res.status(404).json({ error: "TodoId not found!" });
+  }
+}
+
+app.get("/todos/:id", displayTodoById);
+
+function createTodo(req, res) {
+  const { title, description } = req.body;
+  var newTodo = {
+    id: idCounter++,
+    title,
+    description,
+  };
+  todos.push(newTodo);
+  res.status(201).json({ id: newTodo.id });
+}
+
+app.post("/todos", createTodo);
+
+function updateTodo(req, res) {
+  var todoId = parseInt(req.params.id);
+  const { title, description } = req.body;
+  const todo = todos.find((todo) => todo.id === todoId);
+  if (todo) {
+    todo.title = title || todo.title;
+    todo.description = description || todo.description;
+    res.json(todo);
+  } else {
+    res.status(404).json({ error: "Todo not found" });
+  }
+}
+
+app.put("/todos/:id", updateTodo);
+
+function deleteTodo(req, res) {
+  var todoId = parseInt(req.params.id);
+  const todoIndex = todos.findIndex((todo) => todo.id === todoId);
+  if (todoIndex !== -1) {
+    todos.splice(todoIndex, 1);
+    res.sendStatus(200);
+  } else {
+    res.status(404).json({ error: "Todo not found" });
+  }
+}
+
+app.delete("/todos/:id", deleteTodo);
 
 module.exports = app;
